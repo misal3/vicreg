@@ -78,9 +78,9 @@ def get_arguments():
 
 
 def main(args):
+    print("args in main", args)
     torch.backends.cudnn.benchmark = True
     init_distributed_mode(args)
-    print(args)
     gpu = torch.device(args.device)
 
     if args.rank == 0:
@@ -333,6 +333,7 @@ def handle_sigterm(signum, frame):
 
 
 if __name__ == "__main__":
+    print("MAIN\n\n")
     parser = argparse.ArgumentParser('VICReg training script', parents=[get_arguments()])
     args = parser.parse_args()
     main(args)
