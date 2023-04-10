@@ -29,8 +29,8 @@ def parse_args():
 
 def get_shared_folder() -> Path:
     user = os.getenv("USER")
-    if Path("/checkpoint/").is_dir():
-        p = Path(f"/checkpoint/{user}/vicreg/experiments")
+    if Path("/home2/").is_dir():
+        p = Path(f"/home2/{user}/vicreg_experiment")
         p.mkdir(exist_ok=True)
         return p
     raise RuntimeError("No shared folder available")
@@ -77,6 +77,7 @@ class Trainer(object):
 
 def main():
     args = parse_args()
+    print(args)
     if args.exp_dir == "":
         args.exp_dir = get_shared_folder() / "%j"
     Path(args.exp_dir).mkdir(parents=True, exist_ok=True)
