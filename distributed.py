@@ -56,11 +56,14 @@ def save_on_master(*args, **kwargs):
 
 
 def init_distributed_mode(args):
+    print("args in init_distributed_mode", args)
     if 'RANK' in os.environ and 'WORLD_SIZE' in os.environ:
+        print("Rank and world_size")
         args.rank = int(os.environ["RANK"])
         args.world_size = int(os.environ['WORLD_SIZE'])
         args.gpu = int(os.environ['LOCAL_RANK'])
     elif 'SLURM_PROCID' in os.environ:
+        print("SLURM_PROCID")
         args.rank = int(os.environ['SLURM_PROCID'])
         args.gpu = args.rank % torch.cuda.device_count()
 
@@ -73,8 +76,11 @@ def init_distributed_mode(args):
 
     torch.cuda.set_device(args.gpu)
     args.dist_backend = 'nccl'
+    print("args", args)
     print('| distributed init (rank {}): {}, gpu {}'.format(
         args.rank, args.dist_url, args.gpu), flush=True)
+
+    # the stuff below is not working. init_method is the problem
     torch.distributed.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                          world_size=args.world_size, rank=args.rank)
     torch.distributed.barrier()
