@@ -98,7 +98,7 @@ def main(args):
     print("after transforms")
 
     dataset = datasets.ImageFolder(args.data_dir / "train", transforms)
-    dataset = torch.utils.data.Subset(dataset, range(0, 10000))
+    #dataset = torch.utils.data.Subset(dataset, range(0, 10000))
     #sampler = torch.utils.data.distributed.DistributedSampler(dataset, shuffle=True)
     sampler = torch.utils.data.RandomSampler(data_source=dataset, )
     print("after sampler")
@@ -142,7 +142,7 @@ def main(args):
 
     start_time = last_logging = time.time()
     scaler = torch.cuda.amp.GradScaler()
-    for epoch in range(start_epoch, 2): #args.epochs):
+    for epoch in range(start_epoch, args.epochs):
         print(f"epoch: {epoch}")
         print(f"steps per epoch: {len(loader)}")
         #sampler.set_epoch(epoch)
