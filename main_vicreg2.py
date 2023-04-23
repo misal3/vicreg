@@ -49,6 +49,8 @@ def get_arguments():
                         help='Number of epochs')
     parser.add_argument("--batch-size", type=int, default=2048,
                         help='Effective batch size (per worker batch size is [batch-size] / world-size)')
+    parser.add_argument("--data-subset-size", type=int, default=-1,
+                        help="Number of pictures to use for training. -1 = all pictures of training set")
     parser.add_argument("--base-lr", type=float, default=0.2,
                         help='Base learning rate, effective learning after warmup is [base-lr] * [batch-size] / 256')
     parser.add_argument("--wd", type=float, default=1e-6,
@@ -93,32 +95,32 @@ def main(args):
         print(" ".join(sys.argv))
         print(" ".join(sys.argv), file=stats_file)"""
 
-
     transforms = aug.TrainTransform()
     print("after transforms")
 
     dataset = datasets.ImageFolder(args.data_dir / "train", transforms)
-    #dataset = torch.utils.data.Subset(dataset, range(0, 10000))
-    #sampler = torch.utils.data.distributed.DistributedSampler(dataset, shuffle=True)
+    if args.data_subset_size > 0:
+        dataset = torch.utils.data.Subset(dataset, range(0, args.data_subset_size))
+    # sampler = torch.utils.data.distributed.DistributedSampler(dataset, shuffle=True)
     sampler = torch.utils.data.RandomSampler(data_source=dataset, )
     print("after sampler")
     assert args.batch_size % args.world_size == 0
-    #per_device_batch_size = args.batch_size // args.world_size
+    # per_device_batch_size = args.batch_size // args.world_size
     loader = torch.utils.data.DataLoader(
         dataset,
-        batch_size=args.batch_size, #per_device_batch_size,
-        #num_workers=args.num_workers,
+        batch_size=args.batch_size,  # per_device_batch_size,
+        # num_workers=args.num_workers,
         pin_memory=True,
         sampler=sampler,
     )
-    #max_split_size_mb = 512
+    # max_split_size_mb = 512
     print("loader loaded")
 
     model = VICReg(args).cuda(gpu)
     print("model", model)
     print("model created")
     model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
-    #model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[gpu])
+    # model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[gpu])
 
     print("model distributed")
     optimizer = LARS(
@@ -131,7 +133,7 @@ def main(args):
     print("optimizer created")
 
     if (args.exp_dir / "model.pth").is_file():
-        if True: #args.rank == 0:
+        if True:  # args.rank == 0:
             print("resuming from checkpoint")
         ckpt = torch.load(args.exp_dir / "model.pth", map_location="cpu")
         start_epoch = ckpt["epoch"]
@@ -145,20 +147,20 @@ def main(args):
     for epoch in range(start_epoch, args.epochs):
         print(f"epoch: {epoch}")
         print(f"steps per epoch: {len(loader)}")
-        #sampler.set_epoch(epoch)
-        for step, ((x, y), _) in enumerate(loader, start=epoch * 5): #len(loader)):
+        # sampler.set_epoch(epoch)
+        for step, ((x, y), _) in enumerate(loader, start=epoch * 5):  # len(loader)):
             print(f"step {step}")
             x = x.cuda(gpu, non_blocking=True)
             y = y.cuda(gpu, non_blocking=True)
 
             lr = adjust_learning_rate(args, optimizer, loader, step)
-            #print("lr", lr)
+            # print("lr", lr)
 
             optimizer.zero_grad()
-            #with torch.cuda.amp.autocast():
+            # with torch.cuda.amp.autocast():
             loss = model.forward(x, y)
-            #print(f"loss: {loss}")
-            scaler.scale(loss).backward()
+            # print(f"loss: {loss}")
+            scaler.scale(loss["loss_total"]).backward()
             scaler.step(optimizer)
             scaler.update()
 
@@ -167,23 +169,24 @@ def main(args):
                 stats = dict(
                     epoch=epoch,
                     step=step,
-                    loss=loss.item(),
+                    loss=loss["loss_total"].item(),
+                    loss_details=loss["loss_details"],#.item(),
                     time=int(current_time - start_time),
                     lr=lr,
                 )
                 print(json.dumps(stats))
                 print(json.dumps(stats), file=stats_file)
                 last_logging = current_time
-        if True: #args.rank == 0:
+        if True:  # args.rank == 0:
             state = dict(
                 epoch=epoch + 1,
                 model=model.state_dict(),
                 optimizer=optimizer.state_dict(),
             )
             torch.save(state, args.exp_dir / "model.pth")
-    #if args.rank == 0:
-        #torch.save(model.module.backbone.state_dict(), args.exp_dir / "resnet50.pth")
-    #torch.save(model.module.backbone.state_dict(), args.exp_dir / "resnet50.pth")
+    # if args.rank == 0:
+    # torch.save(model.module.backbone.state_dict(), args.exp_dir / "resnet50.pth")
+    # torch.save(model.module.backbone.state_dict(), args.exp_dir / "resnet50.pth")
     torch.save(model.backbone.state_dict(), args.exp_dir / "resnet50.pth")
 
 
@@ -220,8 +223,8 @@ class VICReg(nn.Module):
 
         repr_loss = F.mse_loss(x, y)
 
-        #x = torch.cat(FullGatherLayer.apply(x), dim=0)
-        #y = torch.cat(FullGatherLayer.apply(y), dim=0)
+        # x = torch.cat(FullGatherLayer.apply(x), dim=0)
+        # y = torch.cat(FullGatherLayer.apply(y), dim=0)
         x = x - x.mean(dim=0)
         y = y - y.mean(dim=0)
 
@@ -236,10 +239,18 @@ class VICReg(nn.Module):
         ) + off_diagonal(cov_y).pow_(2).sum().div(self.num_features)
 
         loss = (
-            self.args.sim_coeff * repr_loss
-            + self.args.std_coeff * std_loss
-            + self.args.cov_coeff * cov_loss
+                self.args.sim_coeff * repr_loss
+                + self.args.std_coeff * std_loss
+                + self.args.cov_coeff * cov_loss
         )
+        loss = {
+            "loss_total": self.args.sim_coeff * repr_loss + self.args.std_coeff * std_loss + self.args.cov_coeff * cov_loss,
+            "loss_details": {
+                "invariance_loss": self.args.sim_coeff * repr_loss.item(),
+                "variance_loss": self.args.std_coeff * std_loss.item(),
+                "covariance_loss": self.args.cov_coeff * cov_loss.item()
+            }
+        }
         return loss
 
 
@@ -267,14 +278,14 @@ def off_diagonal(x):
 
 class LARS(optim.Optimizer):
     def __init__(
-        self,
-        params,
-        lr,
-        weight_decay=0,
-        momentum=0.9,
-        eta=0.001,
-        weight_decay_filter=None,
-        lars_adaptation_filter=None,
+            self,
+            params,
+            lr,
+            weight_decay=0,
+            momentum=0.9,
+            eta=0.001,
+            weight_decay_filter=None,
+            lars_adaptation_filter=None,
     ):
         defaults = dict(
             lr=lr,
