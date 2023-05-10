@@ -20,11 +20,11 @@ def extract_keys(key_value_pairs: list[str]) -> list[float]:
 
 def plot(df: pd.DataFrame):
     # select the columns of interest
-    cols = ['epoch', 'loss', 'invariance_loss', 'variance_loss', 'covariance_loss']
+    cols = ['step', 'loss', 'invariance_loss', 'variance_loss', 'covariance_loss']
     data = df[cols]
 
     # set the epoch column as the x-axis
-    x = data['epoch']
+    x = data['step']
 
     # plot the y-axis variables against the x-axis
     plt.plot(x, data['loss'], label='loss')
@@ -33,7 +33,7 @@ def plot(df: pd.DataFrame):
     plt.plot(x, data['covariance_loss'], label='covariance_loss')
 
     # add labels and title
-    plt.xlabel('Epoch')
+    plt.xlabel('Step')
     plt.ylabel('Loss')
     plt.title('Loss over time')
 
@@ -54,7 +54,7 @@ def main():
     matches_list = []
 
     # open the input file
-    with open('stats.txt', 'r') as file:
+    with open('stats_1000_bs64.txt', 'r') as file:
         # read the first line to get the keys
         file.readline()  # ignore the first line (empty)
         keys = re.findall(r'(\"\w*\")', file.readline())
@@ -74,7 +74,7 @@ def main():
     df.columns = keys
 
     # print the resulting dataframe
-    print(df)
+    # print(df)
     plot(df)
 
 
