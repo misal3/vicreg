@@ -78,10 +78,13 @@ def get_arguments():
 
 
 def main(args):
-    print("args in main", args)
+    print(f"cuda availble: {torch.cuda.is_available()}")
+    print("args in main", args, "\n\n")
     torch.backends.cudnn.benchmark = True
     init_distributed_mode(args)
+    print("initialized")
     gpu = torch.device(args.device)
+    print("gpu", gpu)
 
     if args.rank == 0:
         args.exp_dir.mkdir(parents=True, exist_ok=True)
@@ -102,10 +105,13 @@ def main(args):
         pin_memory=True,
         sampler=sampler,
     )
+    print("loader loaded")
 
     model = VICReg(args).cuda(gpu)
+    print("model created")
     model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
     model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[gpu])
+    print("model distributed")
     optimizer = LARS(
         model.parameters(),
         lr=0,
@@ -113,6 +119,7 @@ def main(args):
         weight_decay_filter=exclude_bias_and_norm,
         lars_adaptation_filter=exclude_bias_and_norm,
     )
+    print("optimizer created")
 
     if (args.exp_dir / "model.pth").is_file():
         if args.rank == 0:
@@ -127,6 +134,7 @@ def main(args):
     start_time = last_logging = time.time()
     scaler = torch.cuda.amp.GradScaler()
     for epoch in range(start_epoch, args.epochs):
+        print(f"epoch: {epoch}")
         sampler.set_epoch(epoch)
         for step, ((x, y), _) in enumerate(loader, start=epoch * len(loader)):
             x = x.cuda(gpu, non_blocking=True)
