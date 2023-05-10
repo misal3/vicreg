@@ -12,6 +12,8 @@ import math
 import os
 import sys
 import time
+import logging
+from helpers import save_heatmap
 
 import torch
 import torch.nn.functional as F
@@ -23,6 +25,8 @@ import augmentations as aug
 from distributed import init_distributed_mode
 
 import resnet
+
+logging.basicConfig(level=logging.DEBUG, filename='vicreg.log', filemode='w', format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def get_arguments():
@@ -86,7 +90,7 @@ def main(args):
     init_distributed_mode(args)
     print("initialized")"""
     gpu = torch.device(args.device)
-    print("gpu", gpu)
+    logging.info(f"gpu: {gpu}")
 
     stats_file = open(args.exp_dir / "stats.txt", "a", buffering=1)
     """if args.rank == 0:
@@ -96,14 +100,12 @@ def main(args):
         print(" ".join(sys.argv), file=stats_file)"""
 
     transforms = aug.TrainTransform()
-    print("after transforms")
 
     dataset = datasets.ImageFolder(args.data_dir / "train", transforms)
     if args.data_subset_size > 0:
         dataset = torch.utils.data.Subset(dataset, range(0, args.data_subset_size))
     # sampler = torch.utils.data.distributed.DistributedSampler(dataset, shuffle=True)
     sampler = torch.utils.data.RandomSampler(data_source=dataset, )
-    print("after sampler")
     assert args.batch_size % args.world_size == 0
     # per_device_batch_size = args.batch_size // args.world_size
     loader = torch.utils.data.DataLoader(
@@ -114,15 +116,12 @@ def main(args):
         sampler=sampler,
     )
     # max_split_size_mb = 512
-    print("loader loaded")
 
     model = VICReg(args).cuda(gpu)
-    print("model", model)
-    print("model created")
+    logging.info(f"model: \n{model}")
     model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
     # model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[gpu])
 
-    print("model distributed")
     optimizer = LARS(
         model.parameters(),
         lr=0,
@@ -130,7 +129,6 @@ def main(args):
         weight_decay_filter=exclude_bias_and_norm,
         lars_adaptation_filter=exclude_bias_and_norm,
     )
-    print("optimizer created")
 
     if (args.exp_dir / "model.pth").is_file():
         if True:  # args.rank == 0:
@@ -148,7 +146,7 @@ def main(args):
         print(f"epoch: {epoch}")
         print(f"steps per epoch: {len(loader)}")
         # sampler.set_epoch(epoch)
-        for step, ((x, y), _) in enumerate(loader, start=epoch * 5):  # len(loader)):
+        for step, ((x, y), _) in enumerate(loader, start=epoch * len(loader)):  # len(loader)):
             print(f"step {step}")
             x = x.cuda(gpu, non_blocking=True)
             y = y.cuda(gpu, non_blocking=True)
@@ -158,7 +156,7 @@ def main(args):
 
             optimizer.zero_grad()
             # with torch.cuda.amp.autocast():
-            loss = model.forward(x, y)
+            loss = model.forward(x, y, step=step, epoch=epoch)
             # print(f"loss: {loss}")
             scaler.scale(loss["loss_total"]).backward()
             scaler.step(optimizer)
@@ -185,8 +183,6 @@ def main(args):
             )
             torch.save(state, args.exp_dir / "model.pth")
     # if args.rank == 0:
-    # torch.save(model.module.backbone.state_dict(), args.exp_dir / "resnet50.pth")
-    # torch.save(model.module.backbone.state_dict(), args.exp_dir / "resnet50.pth")
     torch.save(model.backbone.state_dict(), args.exp_dir / "resnet50.pth")
 
 
@@ -216,33 +212,49 @@ class VICReg(nn.Module):
             zero_init_residual=True
         )
         self.projector = Projector(args, self.embedding)
+        self.last_epoch = -1
 
-    def forward(self, x, y):
+    def forward(self, x, y, step: int = 0, epoch: int = 0):
         x = self.projector(self.backbone(x))
         y = self.projector(self.backbone(y))
 
+        logging.info("########## FORWARD ##############")
+        logging.info(f'shape: x: {x.shape}, y: {y.shape}')
+
         repr_loss = F.mse_loss(x, y)
+
+        logging.info(f'repr_loss: {repr_loss}')
 
         # x = torch.cat(FullGatherLayer.apply(x), dim=0)
         # y = torch.cat(FullGatherLayer.apply(y), dim=0)
         x = x - x.mean(dim=0)
         y = y - y.mean(dim=0)
+        logging.info(f'x: {x}')
+        logging.info(f'y: {y}')
 
         std_x = torch.sqrt(x.var(dim=0) + 0.0001)
         std_y = torch.sqrt(y.var(dim=0) + 0.0001)
+        logging.info(f'std_x: {std_x.shape}\n{std_x}')
+        logging.info(f'std_y: {std_y.shape}\n{std_y}')
         std_loss = torch.mean(F.relu(1 - std_x)) / 2 + torch.mean(F.relu(1 - std_y)) / 2
+        logging.info(f'std_loss: {std_loss}')
 
         cov_x = (x.T @ x) / (self.args.batch_size - 1)
         cov_y = (y.T @ y) / (self.args.batch_size - 1)
+        logging.info(f'cov_x: {cov_x.shape}\n{cov_x}')
+        logging.info(f'cov_y: {cov_y.shape}\n{cov_y}')
         cov_loss = off_diagonal(cov_x).pow_(2).sum().div(
             self.num_features
         ) + off_diagonal(cov_y).pow_(2).sum().div(self.num_features)
+        logging.info(f'cov_loss: {cov_loss}')
 
-        loss = (
-                self.args.sim_coeff * repr_loss
-                + self.args.std_coeff * std_loss
-                + self.args.cov_coeff * cov_loss
-        )
+        if epoch != self.last_epoch:
+            self.last_epoch = epoch
+            save_heatmap(tensor=cov_x, downsampling=16, plot_title=f'cov_x, step {step}, epoch {epoch}',
+                         filepath=Path(f'{args.exp_dir}/subset_10000_bs64/cov_x_step{step}_epoch{epoch}.png'))
+            save_heatmap(tensor=cov_y, downsampling=16, plot_title=f'cov_y, step {step}, epoch {epoch}',
+                         filepath=Path(f'{args.exp_dir}/subset_10000_bs64/cov_y_step{step}_epoch{epoch}.png'))
+
         loss = {
             "loss_total": self.args.sim_coeff * repr_loss + self.args.std_coeff * std_loss + self.args.cov_coeff * cov_loss,
             "loss_details": {
@@ -255,14 +267,26 @@ class VICReg(nn.Module):
 
 
 def Projector(args, embedding):
-    mlp_spec = f"{embedding}-{args.mlp}"
+    """
+    Sequential(
+        (0): Linear(in_features=2048, out_features=8192, bias=True)
+        (1): BatchNorm1d(8192, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU(inplace=True)
+        (3): Linear(in_features=8192, out_features=8192, bias=True)
+        (4): BatchNorm1d(8192, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (5): ReLU(inplace=True)
+        (6): Linear(in_features=8192, out_features=8192, bias=False)
+    )
+    """
+    mlp_spec = f"{embedding}-{args.mlp}"  # 2048-8192-8192-8192
     layers = []
-    f = list(map(int, mlp_spec.split("-")))
+    f = list(map(int, mlp_spec.split("-")))  # [2048 8192 8192 8192]
     for i in range(len(f) - 2):
         layers.append(nn.Linear(f[i], f[i + 1]))
         layers.append(nn.BatchNorm1d(f[i + 1]))
         layers.append(nn.ReLU(True))
     layers.append(nn.Linear(f[-2], f[-1], bias=False))
+    logging.info(f'projector: {layers}')
     return nn.Sequential(*layers)
 
 
@@ -368,6 +392,7 @@ def handle_sigterm(signum, frame):
 
 if __name__ == "__main__":
     print("MAIN\n\n")
+    logging.info("MAIN")
     parser = argparse.ArgumentParser('VICReg training script', parents=[get_arguments()])
     args = parser.parse_args()
     main(args)
