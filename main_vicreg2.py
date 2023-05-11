@@ -1,6 +1,6 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 # All rights reserved.
-
+import random
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
@@ -103,7 +103,9 @@ def main(args):
 
     dataset = datasets.ImageFolder(args.data_dir / "train", transforms)
     if args.data_subset_size > 0:
-        dataset = torch.utils.data.Subset(dataset, range(0, args.data_subset_size))
+        random_indices = random.sample(range(0, len(dataset)), args.data_subset_size)
+        dataset = torch.utils.data.Subset(dataset, random_indices)
+        #dataset = torch.utils.data.Subset(dataset, range(0, args.data_subset_size))
     # sampler = torch.utils.data.distributed.DistributedSampler(dataset, shuffle=True)
     sampler = torch.utils.data.RandomSampler(data_source=dataset, )
     assert args.batch_size % args.world_size == 0
@@ -251,9 +253,9 @@ class VICReg(nn.Module):
         if epoch != self.last_epoch:
             self.last_epoch = epoch
             save_heatmap(tensor=cov_x, downsampling=16, plot_title=f'cov_x, step {step}, epoch {epoch}',
-                         filepath=Path(f'{args.exp_dir}/subset_10000_bs64/cov_x_step{step}_epoch{epoch}.png'))
+                         filepath=Path(f'{args.exp_dir}/cov_x_step{step}_epoch{epoch}.png'))
             save_heatmap(tensor=cov_y, downsampling=16, plot_title=f'cov_y, step {step}, epoch {epoch}',
-                         filepath=Path(f'{args.exp_dir}/subset_10000_bs64/cov_y_step{step}_epoch{epoch}.png'))
+                         filepath=Path(f'{args.exp_dir}/cov_y_step{step}_epoch{epoch}.png'))
 
         loss = {
             "loss_total": self.args.sim_coeff * repr_loss + self.args.std_coeff * std_loss + self.args.cov_coeff * cov_loss,
@@ -395,4 +397,6 @@ if __name__ == "__main__":
     logging.info("MAIN")
     parser = argparse.ArgumentParser('VICReg training script', parents=[get_arguments()])
     args = parser.parse_args()
+    with open(Path(f'{args.exp_dir}/args.txt'), "w") as args_file:
+        args_file.write(str(args))
     main(args)
