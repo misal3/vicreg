@@ -2,6 +2,15 @@ import pandas as pd
 import re
 import matplotlib.pyplot as plt
 import os
+import argparse
+from pathlib import Path
+
+
+def get_arguments():
+    parser = argparse.ArgumentParser(description="Analyze loss by converting a stats.txt file to a plot", add_help=False)
+    parser.add_argument('--input_file', type=Path, required=True, help='The stats.txt file to analyze')
+    parser.add_argument('--output_file', type=Path, required=True, help='The plot output file of the loss')
+    return parser
 
 
 def extract_values(key_value_pairs: list[str]) -> list[float]:
@@ -18,7 +27,7 @@ def extract_keys(key_value_pairs: list[str]) -> list[float]:
     return return_list
 
 
-def plot(df: pd.DataFrame):
+def plot(df: pd.DataFrame, plot_file: Path):
     # select the columns of interest
     cols = ['step', 'loss', 'invariance_loss', 'variance_loss', 'covariance_loss']
     data = df[cols]
@@ -39,7 +48,7 @@ def plot(df: pd.DataFrame):
 
     # add a legend
     plt.legend()
-    plt.savefig('loss_plot.png')
+    plt.savefig(plot_file)
     plt.close()
 
     # show the plot
@@ -48,13 +57,15 @@ def plot(df: pd.DataFrame):
 
 
 def main():
-    # define the pattern
+    parser = argparse.ArgumentParser('Loss Analysis Script', parents=[get_arguments()])
+    args = parser.parse_args()
+
     pattern = r'(\"[\w\s]+\": \d+\.?\d*)'
     # create an empty list to store the matches
     matches_list = []
 
     # open the input file
-    with open('stats_1000_bs64.txt', 'r') as file:
+    with open(args.input_file, 'r') as file:
         # read the first line to get the keys
         file.readline()  # ignore the first line (empty)
         keys = re.findall(r'(\"\w*\")', file.readline())
@@ -75,7 +86,7 @@ def main():
 
     # print the resulting dataframe
     # print(df)
-    plot(df)
+    plot(df, args.output_file)
 
 
 main()
