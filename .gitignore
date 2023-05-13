@@ -1,2 +1,4 @@
 # ignore model files, since they are too big
 *.pth
+err*.log
+out*.log
