@@ -148,7 +148,7 @@ def main(args):
         print(f"epoch: {epoch}")
         print(f"steps per epoch: {len(loader)}")
         # sampler.set_epoch(epoch)
-        for step, ((x, y), _) in enumerate(loader, start=epoch * len(loader)):  # len(loader)):
+        for step, ((x, y), _) in enumerate(loader, start=epoch * len(loader)):
             print(f"step {step}")
             x = x.cuda(gpu, non_blocking=True)
             y = y.cuda(gpu, non_blocking=True)
@@ -157,8 +157,8 @@ def main(args):
             # print("lr", lr)
 
             optimizer.zero_grad()
-            # with torch.cuda.amp.autocast():
-            loss = model.forward(x, y, step=step, epoch=epoch)
+            with torch.cuda.amp.autocast():
+                loss = model.forward(x, y, step=step, epoch=epoch)
             # print(f"loss: {loss}")
             scaler.scale(loss["loss_total"]).backward()
             scaler.step(optimizer)
