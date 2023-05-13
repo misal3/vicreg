@@ -89,8 +89,10 @@ def main():
     df_acc.columns = keys_acc
 
     # print the resulting dataframe
-    plot(df=df_lost, plot_file=args.output_file, cols=["step", "loss"], x_axis="step", title="Loss during evaluation", ylabel='loss')
-    plot(df=df_acc, plot_file=Path("evaluation_plot_acc.png"), cols=["epoch", "acc1", "acc5", "best_acc1", "best_acc5"], x_axis="epoch", title="Accuracy during evaluation", ylabel='accuracy [%]')
+    filename, filetype = str(args.output_file).split('.')
+
+    plot(df=df_lost, plot_file=Path(f'{filename}_loss.{filetype}'), cols=["step", "loss"], x_axis="step", title="Loss during evaluation", ylabel='loss')
+    plot(df=df_acc, plot_file=Path(f'{filename}_acc.{filetype}'), cols=["epoch", "acc1", "acc5", "best_acc1", "best_acc5"], x_axis="epoch", title="Accuracy during evaluation", ylabel='accuracy [%]')
 
 
 main()
