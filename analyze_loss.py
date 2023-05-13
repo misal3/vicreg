@@ -32,7 +32,7 @@ def plot(df: pd.DataFrame, plot_file: Path):
     cols = ['step', 'loss', 'invariance_loss', 'variance_loss', 'covariance_loss']
     data = df[cols]
 
-    # set the epoch column as the x-axis
+    # set the step column as the x-axis
     x = data['step']
 
     # plot the y-axis variables against the x-axis
@@ -67,7 +67,7 @@ def main():
     # open the input file
     with open(args.input_file, 'r') as file:
         # read the first line to get the keys
-        file.readline()  # ignore the first line (empty)
+        # file.readline()  # ignore the first line (empty)
         keys = re.findall(r'(\"\w*\")', file.readline())
         keys = [w.replace('"', '') for w in keys]
         keys.remove("loss_details")
