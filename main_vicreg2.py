@@ -1,10 +1,10 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 # All rights reserved.
-import random
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
 
+import random
 from pathlib import Path
 import argparse
 import json
@@ -13,7 +13,10 @@ import os
 import sys
 import time
 import logging
-from helpers import save_heatmap
+
+import torchvision
+
+from helpers import save_heatmap, downsample_cov
 
 import torch
 import torch.nn.functional as F
@@ -23,8 +26,8 @@ import torch.utils.data.sampler
 import torchvision.datasets as datasets
 import augmentations as aug
 from distributed import init_distributed_mode
-
 import resnet
+from torch.utils.tensorboard import SummaryWriter
 
 logging.basicConfig(level=logging.DEBUG, filename='vicreg.log', filemode='w', format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -121,9 +124,16 @@ def main(args):
 
     model = VICReg(args).cuda(gpu)
     logging.info(f"model: \n{model}")
-    model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
+    loader_ = torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=True)
+    example_images, _ = next(iter(loader_))
+    example_images = torch.cat(example_images, dim=0)
+    image_grid = torchvision.utils.make_grid(example_images)
+    writer.add_image("sample images", image_grid)
+    # scripted_model = torch.jit.script(model)
+    # writer.add_graph(scripted_model.to('cpu'), [example_images, example_images])
     # model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[gpu])
 
+    model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
     optimizer = LARS(
         model.parameters(),
         lr=0,
@@ -159,7 +169,12 @@ def main(args):
             optimizer.zero_grad()
             with torch.cuda.amp.autocast():
                 loss = model.forward(x, y, step=step, epoch=epoch)
-            # print(f"loss: {loss}")
+
+            writer.add_scalar('loss', loss["loss_total"], step)
+            writer.add_scalar('invariance_loss', loss["loss_details"]["invariance_loss"], step)
+            writer.add_scalar('variance_loss', loss["loss_details"]["variance_loss"], step)
+            writer.add_scalar('covariance_loss', loss["loss_details"]["covariance_loss"], step)
+
             scaler.scale(loss["loss_total"]).backward()
             scaler.step(optimizer)
             scaler.update()
@@ -220,6 +235,10 @@ class VICReg(nn.Module):
         x = self.projector(self.backbone(x))
         y = self.projector(self.backbone(y))
 
+        if step % 100 == 0:
+            writer.add_embedding(mat=x, global_step=step, tag='x')
+            writer.add_embedding(mat=x, global_step=step, tag='y')
+
         logging.info("########## FORWARD ##############")
         logging.info(f'shape: x: {x.shape}, y: {y.shape}')
 
@@ -243,6 +262,11 @@ class VICReg(nn.Module):
 
         cov_x = (x.T @ x) / (self.args.batch_size - 1)
         cov_y = (y.T @ y) / (self.args.batch_size - 1)
+
+        if step % 100 == 0:
+            writer.add_embedding(mat=downsample_cov(tensor=cov_x, downsampling=16), global_step=step, tag='cov_x')
+            writer.add_embedding(mat=downsample_cov(tensor=cov_y, downsampling=16), global_step=step, tag='cov_y')
+
         logging.info(f'cov_x: {cov_x.shape}\n{cov_x}')
         logging.info(f'cov_y: {cov_y.shape}\n{cov_y}')
         cov_loss = off_diagonal(cov_x).pow_(2).sum().div(
@@ -253,9 +277,9 @@ class VICReg(nn.Module):
         if epoch != self.last_epoch:
             self.last_epoch = epoch
             save_heatmap(tensor=cov_x, downsampling=16, plot_title=f'cov_x, step {step}, epoch {epoch}',
-                         filepath=Path(f'{args.exp_dir}/cov_x_step{step}_epoch{epoch}.png'))
+                         filepath=Path(f'{args.exp_dir}/covPlots/cov_x_step{step}_epoch{epoch}.png'))
             save_heatmap(tensor=cov_y, downsampling=16, plot_title=f'cov_y, step {step}, epoch {epoch}',
-                         filepath=Path(f'{args.exp_dir}/cov_y_step{step}_epoch{epoch}.png'))
+                         filepath=Path(f'{args.exp_dir}/covPlots/cov_y_step{step}_epoch{epoch}.png'))
 
         loss = {
             "loss_total": self.args.sim_coeff * repr_loss + self.args.std_coeff * std_loss + self.args.cov_coeff * cov_loss,
@@ -265,6 +289,11 @@ class VICReg(nn.Module):
                 "covariance_loss": self.args.cov_coeff * cov_loss.item()
             }
         }
+        # loss = (
+        #         self.args.sim_coeff * repr_loss
+        #         + self.args.std_coeff * std_loss
+        #         + self.args.cov_coeff * cov_loss
+        # )
         return loss
 
 
@@ -397,6 +426,8 @@ if __name__ == "__main__":
     logging.info("MAIN")
     parser = argparse.ArgumentParser('VICReg training script', parents=[get_arguments()])
     args = parser.parse_args()
+    global writer
+    writer = SummaryWriter(str(args.exp_dir) + "/tensorboard")
     with open(Path(f'{args.exp_dir}/args.txt'), "w") as args_file:
         args_file.write(str(args))
     main(args)
