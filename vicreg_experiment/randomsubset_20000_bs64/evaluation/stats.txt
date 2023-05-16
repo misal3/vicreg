@@ -1,0 +1,4 @@
+/home2/michael.s/vicreg/evaluate2.py --data-dir /home2/michael.s/imagenet/ILSVRC/Data/CLS-LOC --exp-dir /home2/michael.s/vicreg/vicreg_experiment/randomsubset_20000_bs64/evaluation/ --pretrained /home2/michael.s/vicreg/vicreg_experiment/randomsubset_20000_bs64/resnet50.pth --batch-size 64 --workers 1 --train-percent 1
+{"epoch": 0, "step": 0, "lr_backbone": 0, "lr_head": 0.3, "loss": 6.983887195587158, "time": 7}
+{"epoch": 0, "step": 100, "lr_backbone": 0, "lr_head": 0.3, "loss": 38.90772247314453, "time": 45}
+{"epoch": 0, "step": 200, "lr_backbone": 0, "lr_head": 0.3, "loss": 53.166893005371094, "time": 85}
