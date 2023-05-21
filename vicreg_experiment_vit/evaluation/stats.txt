@@ -1,0 +1,9 @@
+/home2/michael.s/vicreg/evaluate2_vit.py --data-dir /home2/michael.s/imagenet/ILSVRC/Data/CLS-LOC/ --exp-dir /home2/michael.s/vicreg/vicreg_experiment_vit/evaluation/ --pretrained /home2/michael.s/vicreg/vicreg_experiment_vit/resnet50.pth --batch-size 64 --workers 1
+{"epoch": 0, "step": 0, "lr_backbone": 0, "lr_head": 0.3, "loss": 7.017765045166016, "time": 8}
+{"epoch": 0, "step": 100, "lr_backbone": 0, "lr_head": 0.3, "loss": 27.4249324798584, "time": 195}
+{"epoch": 0, "step": 200, "lr_backbone": 0, "lr_head": 0.3, "loss": 29.571788787841797, "time": 348}
+{"epoch": 0, "step": 300, "lr_backbone": 0, "lr_head": 0.3, "loss": 30.469497680664062, "time": 426}
+{"epoch": 0, "step": 400, "lr_backbone": 0, "lr_head": 0.3, "loss": 28.351871490478516, "time": 465}
+{"epoch": 0, "step": 500, "lr_backbone": 0, "lr_head": 0.3, "loss": 30.65000343322754, "time": 504}
+{"epoch": 0, "step": 600, "lr_backbone": 0, "lr_head": 0.3, "loss": 27.636077880859375, "time": 542}
+{"epoch": 0, "step": 700, "lr_backbone": 0, "lr_head": 0.3, "loss": 26.59001350402832, "time": 583}
