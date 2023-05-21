@@ -13,11 +13,9 @@ import os
 import sys
 import time
 import logging
-
 import torchvision
-
+from torchvision.models.vision_transformer import vit_b_16
 from helpers import save_heatmap, downsample_cov
-
 import torch
 import torch.nn.functional as F
 from torch import nn, optim
@@ -122,16 +120,13 @@ def main(args):
     )
     # max_split_size_mb = 512
 
-    model = VICReg(args).cuda(gpu)
+    model = VICRegViT(args).cuda(gpu)
     logging.info(f"model: \n{model}")
-    loader_ = torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=True)
+    loader_ = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
     example_images, _ = next(iter(loader_))
     example_images = torch.cat(example_images, dim=0)
     image_grid = torchvision.utils.make_grid(example_images)
     writer.add_image("sample images", image_grid)
-    # scripted_model = torch.jit.script(model)
-    # writer.add_graph(scripted_model.to('cpu'), [example_images, example_images])
-    # model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[gpu])
 
     model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
     optimizer = LARS(
@@ -141,6 +136,11 @@ def main(args):
         weight_decay_filter=exclude_bias_and_norm,
         lars_adaptation_filter=exclude_bias_and_norm,
     )
+    # optimizer = optim.Adam(
+    #     params=model.parameters(),
+    #     lr=0,
+    #     weight_decay=args.wd,
+    # )
 
     if (args.exp_dir / "model.pth").is_file():
         if True:  # args.rank == 0:
@@ -200,7 +200,7 @@ def main(args):
             )
             torch.save(state, args.exp_dir / "model.pth")
     # if args.rank == 0:
-    torch.save(model.backbone.state_dict(), args.exp_dir / "resnet50.pth")
+    torch.save(model.backbone.state_dict(), args.exp_dir / "vit.pth")
 
 
 def adjust_learning_rate(args, optimizer, loader, step):
@@ -218,6 +218,86 @@ def adjust_learning_rate(args, optimizer, loader, step):
     for param_group in optimizer.param_groups:
         param_group["lr"] = lr
     return lr
+
+
+class VICRegViT(nn.Module):
+    def __init__(self, args):
+        super().__init__()
+        self.args = args
+        self.num_features = int(args.mlp.split("-")[-1])
+        # self.backbone, self.embedding = resnet.__dict__[args.arch](
+        #    zero_init_residual=True
+        # )
+        self.backbone = vit_b_16()
+        self.backbone.heads = nn.Identity()
+        self.embedding = 768
+        self.projector = Projector(args, self.embedding)
+        self.last_epoch = -1
+
+    def forward(self, x, y, step: int = 0, epoch: int = 0):
+        x = self.projector(self.backbone(x))
+        y = self.projector(self.backbone(y))
+
+        if step % 1000 == 0:
+            writer.add_embedding(mat=x, global_step=step, tag='x')
+            writer.add_embedding(mat=x, global_step=step, tag='y')
+
+        logging.info("########## FORWARD ##############")
+        logging.info(f'shape: x: {x.shape}, y: {y.shape}')
+
+        repr_loss = F.mse_loss(x, y)
+
+        logging.info(f'repr_loss: {repr_loss}')
+
+        # x = torch.cat(FullGatherLayer.apply(x), dim=0)
+        # y = torch.cat(FullGatherLayer.apply(y), dim=0)
+        x = x - x.mean(dim=0)
+        y = y - y.mean(dim=0)
+        logging.info(f'x: {x}')
+        logging.info(f'y: {y}')
+
+        std_x = torch.sqrt(x.var(dim=0) + 0.0001)
+        std_y = torch.sqrt(y.var(dim=0) + 0.0001)
+        logging.info(f'std_x: {std_x.shape}\n{std_x}')
+        logging.info(f'std_y: {std_y.shape}\n{std_y}')
+        std_loss = torch.mean(F.relu(1 - std_x)) / 2 + torch.mean(F.relu(1 - std_y)) / 2
+        logging.info(f'std_loss: {std_loss}')
+
+        cov_x = (x.T @ x) / (self.args.batch_size - 1)
+        cov_y = (y.T @ y) / (self.args.batch_size - 1)
+
+        if step % 1000 == 0:
+            writer.add_embedding(mat=downsample_cov(tensor=cov_x, downsampling=16), global_step=step, tag='cov_x')
+            writer.add_embedding(mat=downsample_cov(tensor=cov_y, downsampling=16), global_step=step, tag='cov_y')
+
+        logging.info(f'cov_x: {cov_x.shape}\n{cov_x}')
+        logging.info(f'cov_y: {cov_y.shape}\n{cov_y}')
+        cov_loss = off_diagonal(cov_x).pow_(2).sum().div(
+            self.num_features
+        ) + off_diagonal(cov_y).pow_(2).sum().div(self.num_features)
+        logging.info(f'cov_loss: {cov_loss}')
+
+        if epoch != self.last_epoch:
+            self.last_epoch = epoch
+            save_heatmap(tensor=cov_x, downsampling=16, plot_title=f'cov_x, step {step}, epoch {epoch}',
+                         filepath=Path(f'{args.exp_dir}/covPlots/cov_x_step{step}_epoch{epoch}.png'))
+            save_heatmap(tensor=cov_y, downsampling=16, plot_title=f'cov_y, step {step}, epoch {epoch}',
+                         filepath=Path(f'{args.exp_dir}/covPlots/cov_y_step{step}_epoch{epoch}.png'))
+
+        loss = {
+            "loss_total": self.args.sim_coeff * repr_loss + self.args.std_coeff * std_loss + self.args.cov_coeff * cov_loss,
+            "loss_details": {
+                "invariance_loss": self.args.sim_coeff * repr_loss.item(),
+                "variance_loss": self.args.std_coeff * std_loss.item(),
+                "covariance_loss": self.args.cov_coeff * cov_loss.item()
+            }
+        }
+        # loss = (
+        #         self.args.sim_coeff * repr_loss
+        #         + self.args.std_coeff * std_loss
+        #         + self.args.cov_coeff * cov_loss
+        # )
+        return loss
 
 
 class VICReg(nn.Module):
