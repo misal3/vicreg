@@ -1,0 +1,4 @@
+{"epoch": 0, "step": 15, "loss": 36.933135986328125, "loss_details": {"invariance_loss": 4.315830022096634, "variance_loss": 16.748046875, "covariance_loss": 15.867304801940918}, "time": 63, "lr": 0.00015991471215351814}
+{"epoch": 0, "step": 33, "loss": 34.7899169921875, "loss_details": {"invariance_loss": 4.447153210639954, "variance_loss": 16.7724609375, "covariance_loss": 13.577140808105469}, "time": 124, "lr": 0.0003518123667377399}
+{"epoch": 0, "step": 51, "loss": 32.60920715332031, "loss_details": {"invariance_loss": 3.8807854056358337, "variance_loss": 16.83349609375, "covariance_loss": 11.900296211242676}, "time": 185, "lr": 0.0005437100213219616}
+{"epoch": 0, "step": 70, "loss": 31.102602005004883, "loss_details": {"invariance_loss": 3.8726739585399628, "variance_loss": 16.9677734375, "covariance_loss": 10.261178970336914}, "time": 247, "lr": 0.0007462686567164179}

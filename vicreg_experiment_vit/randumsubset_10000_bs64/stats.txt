@@ -1,6 +1,0 @@
-{"epoch": 0, "step": 12, "loss": 38.81022644042969, "loss_details": {"invariance_loss": 4.3318867683410645, "variance_loss": 16.6259765625, "covariance_loss": 17.853342056274414}, "time": 62, "lr": 0.00038216560509554145}
-{"epoch": 0, "step": 27, "loss": 34.84480285644531, "loss_details": {"invariance_loss": 4.592733085155487, "variance_loss": 16.748046875, "covariance_loss": 13.502071380615234}, "time": 124, "lr": 0.0008598726114649682}
-{"epoch": 0, "step": 42, "loss": 33.11127853393555, "loss_details": {"invariance_loss": 4.786532372236252, "variance_loss": 16.89453125, "covariance_loss": 11.43411922454834}, "time": 187, "lr": 0.001337579617834395}
-{"epoch": 0, "step": 58, "loss": 29.168136596679688, "loss_details": {"invariance_loss": 4.150768369436264, "variance_loss": 17.0166015625, "covariance_loss": 8.00174331665039}, "time": 250, "lr": 0.0018471337579617838}
-{"epoch": 0, "step": 71, "loss": 28.02176284790039, "loss_details": {"invariance_loss": 3.9782553911209106, "variance_loss": 17.1630859375, "covariance_loss": 6.887255668640137}, "time": 310, "lr": 0.0022611464968152867}
-{"epoch": 0, "step": 84, "loss": 26.838693618774414, "loss_details": {"invariance_loss": 3.985707461833954, "variance_loss": 17.236328125, "covariance_loss": 5.618610382080078}, "time": 371, "lr": 0.00267515923566879}

@@ -1,0 +1,384 @@
+embeddings {
+  tensor_name: "x:00000"
+  tensor_path: "00000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:00000"
+  tensor_path: "00000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:00000"
+  tensor_path: "00000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:00000"
+  tensor_path: "00000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:01000"
+  tensor_path: "01000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:01000"
+  tensor_path: "01000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:01000"
+  tensor_path: "01000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:01000"
+  tensor_path: "01000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:02000"
+  tensor_path: "02000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:02000"
+  tensor_path: "02000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:02000"
+  tensor_path: "02000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:02000"
+  tensor_path: "02000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:03000"
+  tensor_path: "03000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:03000"
+  tensor_path: "03000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:03000"
+  tensor_path: "03000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:03000"
+  tensor_path: "03000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:04000"
+  tensor_path: "04000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:04000"
+  tensor_path: "04000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:04000"
+  tensor_path: "04000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:04000"
+  tensor_path: "04000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:05000"
+  tensor_path: "05000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:05000"
+  tensor_path: "05000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:05000"
+  tensor_path: "05000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:05000"
+  tensor_path: "05000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:06000"
+  tensor_path: "06000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:06000"
+  tensor_path: "06000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:06000"
+  tensor_path: "06000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:06000"
+  tensor_path: "06000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:07000"
+  tensor_path: "07000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:07000"
+  tensor_path: "07000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:07000"
+  tensor_path: "07000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:07000"
+  tensor_path: "07000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:08000"
+  tensor_path: "08000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:08000"
+  tensor_path: "08000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:08000"
+  tensor_path: "08000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:08000"
+  tensor_path: "08000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:09000"
+  tensor_path: "09000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:09000"
+  tensor_path: "09000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:09000"
+  tensor_path: "09000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:09000"
+  tensor_path: "09000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:10000"
+  tensor_path: "10000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:10000"
+  tensor_path: "10000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:10000"
+  tensor_path: "10000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:10000"
+  tensor_path: "10000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:11000"
+  tensor_path: "11000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:11000"
+  tensor_path: "11000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:11000"
+  tensor_path: "11000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:11000"
+  tensor_path: "11000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:12000"
+  tensor_path: "12000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:12000"
+  tensor_path: "12000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:12000"
+  tensor_path: "12000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:12000"
+  tensor_path: "12000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:13000"
+  tensor_path: "13000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:13000"
+  tensor_path: "13000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:13000"
+  tensor_path: "13000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:13000"
+  tensor_path: "13000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:14000"
+  tensor_path: "14000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:14000"
+  tensor_path: "14000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:14000"
+  tensor_path: "14000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:14000"
+  tensor_path: "14000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:15000"
+  tensor_path: "15000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:15000"
+  tensor_path: "15000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:15000"
+  tensor_path: "15000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:15000"
+  tensor_path: "15000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:16000"
+  tensor_path: "16000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:16000"
+  tensor_path: "16000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:16000"
+  tensor_path: "16000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:16000"
+  tensor_path: "16000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:17000"
+  tensor_path: "17000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:17000"
+  tensor_path: "17000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:17000"
+  tensor_path: "17000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:17000"
+  tensor_path: "17000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:18000"
+  tensor_path: "18000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:18000"
+  tensor_path: "18000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:18000"
+  tensor_path: "18000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:18000"
+  tensor_path: "18000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:19000"
+  tensor_path: "19000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:19000"
+  tensor_path: "19000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:19000"
+  tensor_path: "19000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:19000"
+  tensor_path: "19000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:20000"
+  tensor_path: "20000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:20000"
+  tensor_path: "20000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:20000"
+  tensor_path: "20000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:20000"
+  tensor_path: "20000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:21000"
+  tensor_path: "21000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:21000"
+  tensor_path: "21000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:21000"
+  tensor_path: "21000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:21000"
+  tensor_path: "21000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:22000"
+  tensor_path: "22000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:22000"
+  tensor_path: "22000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:22000"
+  tensor_path: "22000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:22000"
+  tensor_path: "22000/cov_y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "x:23000"
+  tensor_path: "23000/x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "y:23000"
+  tensor_path: "23000/y/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_x:23000"
+  tensor_path: "23000/cov_x/tensors.tsv"
+}
+embeddings {
+  tensor_name: "cov_y:23000"
+  tensor_path: "23000/cov_y/tensors.tsv"
+}
