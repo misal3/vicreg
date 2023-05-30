@@ -8,8 +8,8 @@ from pathlib import Path
 
 def get_arguments():
     parser = argparse.ArgumentParser(description="Analyze loss by converting a stats.txt file to a plot", add_help=False)
-    parser.add_argument('--input_file', type=Path, required=True, help='The stats.txt file to analyze')
-    parser.add_argument('--output_file', type=Path, required=True, help='The plot output file of the loss')
+    parser.add_argument('--input_file', type=Path, default='stats.txt', help='The stats.txt file to analyze')
+    parser.add_argument('--output_file', type=Path, default='loss_plot.png', help='The plot output file of the loss')
     return parser
 
 
